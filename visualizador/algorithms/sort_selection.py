@@ -6,18 +6,72 @@ i = 0          # cabeza de la parte no ordenada
 j = 0          # cursor que recorre y busca el mínimo
 min_idx = 0    # índice del mínimo de la pasada actual
 fase = "buscar"  # "buscar" | "swap"
+j_actual = 0
+resultadoF = 0
+
 
 def init(vals):
-    global items, n, i, j, min_idx, fase
+    global items, n, i, j, min_idx, fase, j_actual, resultadoF
     items = list(vals)
     n = len(items)
     i = 0
     j = i + 1
     min_idx = i
     fase = "buscar"
+    j_actual = 0
+    resultadoF = 0
 
 def step():
-    # TODO:
+    global items, n, i, j, min_idx, fase, j_actual, resultadoF
+
+    #cuando i llega al ultimo numero termina el codigo
+    resultadoF = 0
+    if i > n:
+        return {"done": True}
+    
+
+
+    if fase == "buscar":
+        j_actual = j
+
+        #if j_actual <= n:
+        if items[j_actual] < items[min_idx]:
+            min_idx = j_actual
+            
+        j = j+1
+
+        #cuando j llega al final ya analizamos todos los numeros, asi que cambiamos la fase
+        if j >= n:
+            fase = "swap"
+
+        return {"a": min_idx, "b": j_actual, "swap": False, "done": False}
+    
+
+    if fase == "swap":
+        if i != min_idx:
+            #ponemos el return en una variable especifica para poder avanzar y resetear todas las variables anted de retornar
+            aux = items[i]
+            items[i] = items[min_idx]
+            items[min_idx] = aux
+
+            resultadoF = {"a": i, "b": min_idx, "swap": True, "done": False}
+        if i == min_idx: 
+            resultadoF = {"a": i, "b": min_idx, "swap": False, "done": False}
+
+    i = i+ 1
+    j = i+1
+    j_actual = j
+    min_idx = i
+    fase = "buscar"
+
+    return resultadoF
+
+
+
+
+
+
+
     # - Fase "buscar": comparar j con min_idx, actualizar min_idx, avanzar j.
     #   Devolver {"a": min_idx, "b": j_actual, "swap": False, "done": False}.
     #   Al terminar el barrido, pasar a fase "swap".
@@ -25,4 +79,3 @@ def step():
     #   Luego avanzar i, reiniciar j=i+1 y min_idx=i, volver a "buscar".
     #
     # Cuando i llegue al final, devolvé {"done": True}.
-    return {"done": True}
