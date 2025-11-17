@@ -1,6 +1,5 @@
-
 # =============================
-# QuickSort paso a paso (SKELETON)
+# QuickSort paso a paso (Corregido)
 # Contrato: init(vals), step() -> {"a": int, "b": int, "swap": bool, "done": bool}
 # =============================
 
@@ -9,13 +8,15 @@ n = 0
 
 # Estado
 stack = []          # Pila de (inicio, fin)
-i = 0               # Puntero izquierdo
-j = 0               # Puntero derecho
-pivot = None        # Valor del pivote
+i = 0               # Puntero para partición
+j = 0               # Puntero para partición
+pivot = None        # Valor del pivote (no usado directamente, pero mantenido)
 phase = "idle"      # idle, partitioning, pushing
+low = 0             # Inicio del rango actual
+high = 0            # Fin del rango actual
 
 def init(vals):
-    global items, n, stack, i, j, pivot, phase
+    global items, n, stack, i, j, pivot, phase, low, high
     items = list(vals)
     n = len(items)
 
@@ -27,65 +28,61 @@ def init(vals):
     i = 0
     j = 0
     pivot = None
-
+    low = 0
+    high = 0
 
 def step():
-    global items, stack, i, j, pivot, phase
+    global items, stack, i, j, pivot, phase, low, high
 
-    # Si no queda nada por ordenar
-    if not stack:
+    # Si no queda nada por ordenar y estamos en idle
+    if not stack and phase == "idle":
         return {"done": True}
 
     # Tomamos el rango actual
     if phase == "idle":
+        if not stack:
+            return {"done": True}
         low, high = stack.pop()
-        pivot = items[(low + high) // 2]  # pivote central
-        i = low
-        j = high
+        if low >= high:
+            # Rango trivial, continuar
+            phase = "idle"
+            return {"a": 0, "b": 0, "swap": False, "done": False}
+        pivot = items[high]  # Pivote es el último elemento
+        i = low - 1
+        j = low
         phase = "partitioning"
 
     # -----------------------------
     # FASE: partitioning
     # -----------------------------
     if phase == "partitioning":
-
-        # Mover i hacia la derecha
-        if items[i] < pivot:
-            ret = {"a": i, "b": j, "swap": False, "done": False}
-            i += 1
-            return ret
-
-        # Mover j hacia la izquierda
-        if items[j] > pivot:
-            ret = {"a": i, "b": j, "swap": False, "done": False}
-            j -= 1
-            return ret
-
-        # Si i <= j hacemos swap
-        if i <= j:
-            a, b = i, j
-            items[i], items[j] = items[j], items[i]
-            i += 1
-            j -= 1
-            return {"a": a, "b": b, "swap": True, "done": False}
-
-        # Cuando i > j terminamos la partición
-        phase = "pushing"
+        if j <= high - 1:
+            swap_happened = False
+            if items[j] <= pivot:
+                i += 1
+                items[i], items[j] = items[j], items[i]
+                swap_happened = True
+            j += 1
+            return {"a": i, "b": j - 1, "swap": swap_happened, "done": False}
+        else:
+            # Intercambiar el pivote al lugar correcto
+            items[i + 1], items[high] = items[high], items[i + 1]
+            phase = "pushing"
+            return {"a": i + 1, "b": high, "swap": True, "done": False}
 
     # -----------------------------
     # FASE: pushing — empujar subrangos
     # -----------------------------
     if phase == "pushing":
-        low = min(i, j)
-        high = max(i, j)
+        pivot_index = i + 1  # Posición final del pivote
 
-        # Rango izquierdo
-        if (j_orig := (i - 1)) > (low_orig := low):
-            stack.append((low_orig, j_orig))
+        # Subrango izquierdo
+        if low < pivot_index:
+            stack.append((low, pivot_index - 1))
 
-        # Rango derecho
-        if (i_orig := i) < (high_orig := high):
-            stack.append((i_orig, high_orig))
+        # Subrango derecho
+        if pivot_index + 1 < high:
+            stack.append((pivot_index + 1, high))
 
         phase = "idle"
         return {"a": 0, "b": 0, "swap": False, "done": False}
